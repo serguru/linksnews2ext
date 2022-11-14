@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head>
+    <title>Add links to Links And News 2</title>
+    <link rel="stylesheet" type="text/css" href="bootstrap-flex.min.css">
+    <link rel="stylesheet" type="text/css" href="popup.css">
+    <script src="jquery.min.js"></script>
+    <script src="popup.js"></script>
+</head>
+<body>
+
+    <div class="container-fluid">
+        <div class="row flex-items-xs-bottom flex-items-xs-center">
+            <div class="col-xs-12 text-xs-center">
+                <a href="https://linksnews2.azurewebsites.net/" target="_blank">Links And News 2</a>
+            </div>
+        </div>
+        <div class="row flex-items-xs-bottom flex-items-xs-center">
+            <div class="col-xs-12 text-xs-center" id="generalMessageDiv">
+                Loading...
+            </div>
+        </div>
+    </div>
+
+    <form class="form" id="loginForm" style="display: none">
+        <div>
+            Please log in to add a link
+        </div>
+        <div class="form-group">
+            <label for="loginInput">Name</label>
+            <input type="text" class="form-control input-lg" id="loginInput" required />
+        </div>
+        <div class="form-group">
+            <label for="passwordInput">Password</label>
+            <input type="password" class="form-control input-lg" id="passwordInput" required />
+        </div>
+        <div id="loginError"></div>
+        <div id="loginBtn" class="clickable">
+            Log In
+        </div>
+    </form>
+    <form class="form" id="addLinkForm" style="display: none">
+        <div class="form-group">
+            <label for="pageSelect">Page</label>
+            <select class="form-control" id="pageSelect">
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="rowSelect">Row</label>
+            <select class="form-control" id="rowSelect">
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="columnSelect">Column</label>
+            <select class="form-control" id="columnSelect">
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="linkNameInput">Link Name</label>
+            <input type="text" class="form-control input-lg" id="linkNameInput" required maxlength="100"/>
+        </div>
+        <div class="form-group">
+            <label for="linkAddressInput">Link Address (Url)</label>
+            <input type="text" class="form-control input-lg" id="linkAddressInput" required />
+        </div>
+        <div id="addLinkMessage"></div>
+        <div class="text-xs-right">
+            <div id="addLinkBtn" class="clickable">
+                Add link to Links And News 2
+            </div>
+        </div>
+    </form>
+</body>
+</html>

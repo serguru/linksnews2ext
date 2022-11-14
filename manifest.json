@@ -1,0 +1,29 @@
+{
+  "name": "Links And News 2 Google Chrome extension",
+  "version": "0.0.0.6",
+  "description": "This extension is to add links to Links And News 2 website",
+  "manifest_version": 3,
+  "permissions" : [
+    "webRequest",
+    "activeTab",
+    "tabs",
+    "unlimitedStorage",
+    "storage",
+    "background",
+    "notifications"
+   
+  ],
+  "host_permissions" : [
+    "http://*/*",
+    "https://*/*",
+    "https://linksnews2api.azurewebsites.net/"
+  ],  
+  "action": {
+    "default_icon": "icon.png",
+    "default_popup": "popup.html",
+    "default_title": "Click to add link"
+  },
+
+  "homepage_url": "https://linksnews2.azurewebsites.net/"
+
+}
