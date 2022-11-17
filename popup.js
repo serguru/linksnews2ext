@@ -1,5 +1,6 @@
-﻿//let siteUrl = "https://localhost:44397/";
+﻿//let siteUrl = "https://localhost:7055/";
 let siteUrl = "https://linksnews2api.azurewebsites.net/";
+
 let $loginForm;
 let $loginInput;
 let $passwordInput;
@@ -12,9 +13,22 @@ let $columnSelect;
 let $linkNameInput;
 let $linkAddressInput;
 let account;
-let pages = [];
-let rows = [];
+let pages;
+let page;
+let rows;
+let row;
+let columns;
 let column;
+
+function resetAll() {
+    account = undefined;
+    pages = undefined;
+    page = undefined;
+    rows = undefined;
+    row = undefined;
+    columns = undefined;
+    column = undefined;
+}
 
 function showGeneralMessage(message, error) {
     $loginForm.hide();
@@ -43,6 +57,10 @@ function showAddLinkMessage(message, error) {
         $addLinkMessage.css("color", "");
     }
     $addLinkMessage.show();
+    setTimeout(function () {
+        $addLinkMessage.html("");
+    }, 5000);
+
 }
 
 function showLoading() {
@@ -60,8 +78,8 @@ function showLoginForm() {
     $loginForm.show();
 }
 
-function showAddLinkForm(data) {
-    pages = data;
+function showAddLinkForm() {
+    pages = account.pages;
 
     $loginForm.hide();
     $generalMessageDiv.hide();
@@ -76,81 +94,104 @@ function showAddLinkForm(data) {
     });
 
     $addLinkForm.show();
-
-
 }
 
-function populateColumnsSelect() {
-    let rowId = $rowSelect[0].value;
-    let columns = [];
-
-    if (rowId) {
-
-        for (let i = 0; i < rows.length; i++) {
-            if (rows[i].id == rowId) {
-                columns = rows[i].columns;
-                break;
-            }
-        }
-    }
-
-    $columnSelect.find("option").remove();
-
-    columns.forEach(function (x) {
-        let option = new Option(x.name || "No name column", x.id);
-        $columnSelect.append($(option));
-    });
-}
-
-function populateRowsSelect() {
-    let pageId = $pageSelect[0].value;
-    rows = [];
-    if (pageId) {
-        for (let i = 0; i < pages.length; i++) {
-            if (pages[i].id == pageId) {
-                rows = pages[i].rows;
-                break;
-            }
-        }
-    }
-
+function onPagesSelectChange() {
+    rows = undefined;
+    row = undefined;
+    columns = undefined;
+    column = undefined;
     $rowSelect.find("option").remove();
-
+    $columnSelect.find("option").remove();
+    if (!pages || pages.length === 0) {
+        showGeneralMessage("Pages not found or empty", true);
+        return;
+    }
+    page = pages.find(x => x.id === $pageSelect[0].value);
+    if (!page) {
+        showGeneralMessage("Page not found", true);
+        return;
+    }
+    localStorage.setItem("savedPageId", page.id);
+    if (!page.rows || page.rows.length === 0) {
+        return;
+    }
+    rows = page.rows;
+    const savedRowId = localStorage.getItem("savedRowId");
     rows.forEach(function (x) {
         let option = new Option(x.name || "No name row", x.id);
+        option.selected = x.id === savedRowId;
         $rowSelect.append($(option));
     });
     onRowsSelectChange();
 }
 
-function onPagesSelectChange() {
-    populateRowsSelect();
+function onRowsSelectChange() {
+    columns = undefined;
+    column = undefined;
+    $columnSelect.find("option").remove();
+    if (!rows || rows.length === 0) {
+        return;
+    }
+    row = rows.find(x => x.id === $rowSelect[0].value)
+    if (!row) {
+        showGeneralMessage("Row not found", true);
+        return;
+    }
+    localStorage.setItem("savedRowId", row.id);
+    if (!row.columns || row.columns.length === 0) {
+        return;
+    }
+    columns = row.columns;
+    const savedColumnId = localStorage.getItem("savedColumnId");
+
+    columns.forEach(function (x) {
+        let option = new Option(x.name || "No name column", x.id);
+        option.selected = x.id === savedColumnId;
+        $columnSelect.append($(option));
+    });
+    onColumnsSelectChange();
 }
 
-function onRowsSelectChange() {
-    populateColumnsSelect();
-}
+function onColumnsSelectChange() {
+    column = undefined;
+    if (!columns || columns.length === 0) {
+        return;
+    }
+    column = columns.find(x => x.id === $columnSelect[0].value)
+    if (!column) {
+        showGeneralMessage("Column not found", true);
+        return;
+    }
+    localStorage.setItem("savedColumnId", column.id);
+ 
 
 function populatePagesSelect() {
+    const savedPageId = localStorage.getItem("savedPageId");
     pages.forEach(function (x) {
-        let option = new Option(x.name, x.id);
+        const option = new Option(x.name, x.id);
+        option.selected = x.id === savedPageId;
         $pageSelect.append($(option));
     });
+    
     onPagesSelectChange();
 }
 
 
 function getMyPages() {
 
+    resetAll();
+
     $.get(siteUrl + "account")
         .done(function (response) {
 
-            if (response.pages.length === 0) {
+            if (response?.pages.length === 0) {
                 showGeneralMessage("You have no pages to add a link to", true);
                 return;
             }
 
-            showAddLinkForm(response.pages);
+            account = response;
+            showAddLinkForm();
         })
         .fail(function (response) {
             if (response.status === 401) {
@@ -191,6 +232,11 @@ function login() {
 
 function addLink() {
 
+    if (!column?.links) {
+        showAddLinkMessage('No column or column links to add a link to', true);
+        return;
+    }
+
     let linkName = $linkNameInput[0].value;
     let linkAddress = $linkAddressInput[0].value;
 
@@ -204,39 +250,37 @@ function addLink() {
         return;
     }
 
-    let data = JSON.stringify({
-        pageId: $pageSelect[0].value,
-        columnId: $columnSelect[0].value,
-        title: linkName,
-        href: linkAddress
-    });
+    column.links.push(
+        {
+            id: '',
+            name: linkName,
+            url: linkAddress
+        }
+    )
 
-    $.post(siteUrl + "pages/addLink/", data)
-        .done(function (response) {
-
-            if (response.error) {
-                showAddLinkMessage(response.message, true);
-                return;
-            }
-
+    $.ajax({
+        url: siteUrl + "account",
+        type: 'PUT',
+        data: JSON.stringify(account),
+        success: function () {
             showGeneralMessage("Link has been added");
 
             setTimeout(function () {
                 window.close();
             }, 2000);
-        })
-        .fail(function (response) {
+        },
+        error: function (error) {
             showAddLinkMessage('Error. Failed adding a link.', true);
-        })
-        .always(function () {
+        }
+     });
 
-        });
+
 }
 
 $(document).ready(function () {
 
     $.ajaxSetup({
-        contentType: "application/json; charset=utf-8",
+        contentType: "application/json",
         headers: { login: localStorage.getItem("login") }
     });
 
@@ -259,6 +303,10 @@ $(document).ready(function () {
 
     $rowSelect.on("change", function (e) {
         onRowsSelectChange();
+    });
+
+    $columnSelect.on("change", function (e) {
+        onColumnsSelectChange();
     });
 
     $("#loginBtn").on("click", function () {
