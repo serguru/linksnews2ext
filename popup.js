@@ -164,6 +164,7 @@ function onColumnsSelectChange() {
         return;
     }
     localStorage.setItem("savedColumnId", column.id);
+}
  
 
 function populatePagesSelect() {
