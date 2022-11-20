@@ -47,6 +47,9 @@ function showGeneralMessage(message, error) {
 function showLoginError(message) {
     $loginError.html(message);
     $loginError.show();
+    setTimeout(function () {
+        $loginError.html("");
+    }, 5000);
 }
 
 function showAddLinkMessage(message, error) {
@@ -165,7 +168,7 @@ function onColumnsSelectChange() {
     }
     localStorage.setItem("savedColumnId", column.id);
 }
- 
+
 
 function populatePagesSelect() {
     const savedPageId = localStorage.getItem("savedPageId");
@@ -174,12 +177,21 @@ function populatePagesSelect() {
         option.selected = x.id === savedPageId;
         $pageSelect.append($(option));
     });
-    
+
     onPagesSelectChange();
 }
 
 
 function getMyPages() {
+
+    if (!isLoggedIn()) {
+        showLoginForm();
+        return;
+    }
+
+    $.ajaxSetup({
+        headers: { login: localStorage.getItem("login") }
+    });
 
     resetAll();
 
@@ -196,7 +208,9 @@ function getMyPages() {
         })
         .fail(function (response) {
             if (response.status === 401) {
+                localStorage.removeItem("login");
                 showLoginForm();
+                showLoginError("Wrong login name or password");
                 return;
             }
             showGeneralMessage('Error. Failed retrieving pages list.', true);
@@ -204,8 +218,9 @@ function getMyPages() {
         .always(function () {
 
         });
-
 }
+
+
 
 function login() {
 
@@ -224,14 +239,20 @@ function login() {
 
     localStorage.setItem("login", data);
 
-    $.ajaxSetup({
-        headers: { login: localStorage.getItem("login") }
-    });
-
     getMyPages();
 }
 
 function addLink() {
+
+    if (!isLoggedIn()) {
+        showLoginForm();
+        return;
+    }
+
+    $.ajaxSetup({
+        headers: { login: localStorage.getItem("login") }
+    });
+
 
     if (!column?.links) {
         showAddLinkMessage('No column or column links to add a link to', true);
@@ -273,16 +294,25 @@ function addLink() {
         error: function (error) {
             showAddLinkMessage('Error. Failed adding a link.', true);
         }
-     });
-
-
+    });
 }
+
+const isLoggedIn = () => {
+    try {
+        const item = JSON.parse(localStorage.getItem("login"));
+        const result = item && item.name && item.password;
+        return !!(result);
+    } catch (e) {
+        localStorage.removeItem("login");
+        return false;
+    }
+}
+
 
 $(document).ready(function () {
 
     $.ajaxSetup({
         contentType: "application/json",
-        headers: { login: localStorage.getItem("login") }
     });
 
     $generalMessageDiv = $("#generalMessageDiv");
